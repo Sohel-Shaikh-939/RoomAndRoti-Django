@@ -1,0 +1,154 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ pg.name }} - RoomAndRoti{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+    <a href="{% url 'pg_list' %}" class="text-blue-600 hover:text-blue-800 font-medium">← Back to PGs</a>
+</div>
+
+<div class="bg-white rounded-lg shadow-md overflow-hidden">
+    <!-- Header/Hero Section -->
+    <div class="h-64 sm:h-80 bg-gray-300 relative">
+        {% if pg.image %}
+        <img src="{{ pg.image.url }}" alt="{{ pg.name }}" class="absolute inset-0 w-full h-full object-cover">
+        {% else %}
+        {% load static %}
+        <img src="{% static 'images/default_pg.png' %}" alt="PG Image" class="absolute inset-0 w-full h-full object-cover opacity-80 mix-blend-multiply">
+        {% endif %}
+        
+        <div class="absolute bottom-4 left-4 bg-white/90 backdrop-blur-sm p-4 rounded-lg shadow-md max-w-xl">
+            <h1 class="text-2xl sm:text-3xl font-bold text-gray-900">{{ pg.name }}</h1>
+            <p class="text-gray-600 mt-1"><i class="fa-solid fa-location-dot mr-1 text-gray-400"></i> {{ pg.address }}</p>
+        </div>
+    </div>
+
+    <div class="p-6 md:p-8 grid grid-cols-1 lg:grid-cols-3 gap-8">
+        
+        <!-- Main Info -->
+        <div class="lg:col-span-2 space-y-8">
+            <section>
+                <h2 class="text-xl font-bold text-gray-900 border-b pb-2 mb-4">Overview & Amenities</h2>
+                <div class="flex flex-wrap gap-3">
+                    {% if pg.gender_restriction == 'boys' %}
+                        <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">Boys PG</span>
+                    {% elif pg.gender_restriction == 'girls' %}
+                        <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-pink-100 text-pink-800">Girls PG</span>
+                    {% else %}
+                        <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">Co-ed PG</span>
+                    {% endif %}
+                    
+                    {% if pg.has_wifi %}
+                        <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-800"><i class="fa-solid fa-wifi mr-2 text-blue-500"></i> High-Speed WiFi</span>
+                    {% endif %}
+                    {% if pg.has_ac %}
+                        <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-800">❄️ AC Rooms Available</span>
+                    {% endif %}
+                    {% if pg.food_included %}
+                        <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-yellow-100 text-yellow-800"><i class="fa-solid fa-utensils mr-2 text-orange-600"></i> Food Included</span>
+                    {% endif %}
+                    {% if pg.attached_bathroom %}
+                        <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-800"><i class="fa-solid fa-shower mr-2 text-blue-400"></i> Attached Bathroom</span>
+                    {% endif %}
+                </div>
+            </section>
+
+            <section>
+                <h2 class="text-xl font-bold text-gray-900 border-b pb-2 mb-4">Available Rooms</h2>
+                {% if pg.rooms.all %}
+                    <div class="space-y-4">
+                        {% for room in pg.rooms.all %}
+                            <div class="border rounded-lg p-4 flex justify-between items-center {% if not room.is_available %}bg-gray-50 opacity-60{% endif %}">
+                                <div>
+                                    <h3 class="font-bold text-lg text-gray-800">{{ room.get_occupancy_display }} Sharing</h3>
+                                    <p class="text-sm text-gray-500 mt-1">
+                                        {% if room.is_available %}
+                                            <span class="text-green-600 font-medium">{{ room.vacant_beds }} Bed(s) Available</span>
+                                        {% else %}
+                                            <span class="text-red-500 font-medium">Currently Full</span>
+                                        {% endif %}
+                                    </p>
+                                </div>
+                                <div class="text-right flex flex-col items-end">
+                                    <div>
+                                        <span class="text-xl font-bold text-blue-600">₹{{ room.rent_per_month }}</span>
+                                        <span class="text-gray-500 text-sm">/mo</span>
+                                    </div>
+                                    
+                                    {% if not room.is_available and user.is_authenticated and user.role == 'student' %}
+                                    <form method="post" action="{% url 'join_waitlist' pg.id %}" class="mt-2 text-right">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="room_type_preference" value="{{ room.occupancy }}">
+                                        <button type="submit" class="text-xs bg-indigo-100 hover:bg-indigo-200 text-indigo-700 font-semibold py-1.5 px-3 rounded border border-indigo-200 transition">
+                                            Join Waitlist
+                                        </button>
+                                    </form>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="text-gray-500">No rooms have been listed by the owner yet.</p>
+                {% endif %}
+            </section>
+        </div>
+
+        <!-- Sidebar Contact / Waitlist Card -->
+        <div class="lg:col-span-1">
+            <div class="bg-blue-50 border border-blue-100 rounded-xl p-6 shadow-sm sticky top-24">
+                <h3 class="font-bold text-xl text-gray-900 mb-2">Interested?</h3>
+                <p class="text-gray-600 text-sm mb-6">Contact the owner to book a visit or ask questions.</p>
+                
+                <div class="space-y-4">
+                    <div class="bg-white rounded p-3 flex items-center shadow-sm">
+                        <i class="fa-regular fa-circle-user text-3xl text-gray-400 mr-3"></i>
+                        <div>
+                            <p class="text-xs text-gray-500">Owner</p>
+                            <p class="font-bold text-gray-900">{{ pg.owner.username|title }}</p>
+                        </div>
+                    </div>
+                    
+                    <a href="tel:{{ pg.contact_number }}" class="w-full flex justify-center items-center py-3 px-4 rounded-md shadow bg-blue-600 text-white font-bold hover:bg-blue-700 transition">
+                        <i class="fa-solid fa-phone mr-2"></i> Call {{ pg.contact_number }}
+                    </a>
+
+                    {% if pg.latitude and pg.longitude %}
+                    <a href="https://www.google.com/maps/dir/?api=1&destination={{ pg.latitude|stringformat:'f' }},{{ pg.longitude|stringformat:'f' }}" target="_blank" class="w-full flex justify-center items-center py-3 px-4 rounded-md shadow border border-blue-300 bg-white text-blue-700 font-bold hover:bg-blue-50 transition">
+                        <i class="fa-solid fa-map-location-dot mr-2"></i> Get Directions
+                    </a>
+                    {% else %}
+                    <a href="https://www.google.com/maps/search/?api=1&query={{ pg.address|urlencode }}" target="_blank" class="w-full flex justify-center items-center py-3 px-4 rounded-md shadow border border-blue-300 bg-white text-blue-700 font-bold hover:bg-blue-50 transition">
+                        <i class="fa-solid fa-map-location-dot mr-2"></i> View on Map
+                    </a>
+                    {% endif %}
+                </div>
+
+                <!-- Waitlist Global Button (if any rooms are full) -->
+                {% if user.is_authenticated and user.role == 'student' %}
+                <div class="mt-8 pt-6 border-t border-blue-200">
+                    <h4 class="font-bold text-gray-800 mb-2">Is the PG Full?</h4>
+                    <p class="text-xs text-gray-600 mb-3">Join the general waitlist to be notified first when any bed becomes available.</p>
+                    <form method="post" action="{% url 'join_waitlist' pg.id %}">
+                        {% csrf_token %}
+                        <button type="submit" class="w-full flex justify-center items-center py-2.5 px-4 rounded-md shadow-sm border border-indigo-300 bg-white text-indigo-700 font-bold hover:bg-indigo-50 transition">
+                            ⏳ Join General Waitlist
+                        </button>
+                    </form>
+                </div>
+                {% elif user.is_authenticated and user.role == 'owner' and user == pg.owner %}
+                <div class="mt-8 pt-6 border-t border-blue-200">
+                    <div class="bg-indigo-50 border border-indigo-200 rounded p-4 text-center">
+                        <i class="fa-solid fa-clipboard-list text-2xl mb-2 text-indigo-500 block"></i>
+                        <span class="block text-xl font-bold text-indigo-800">{{ pg.waitlists.count }}</span>
+                        <span class="block text-xs uppercase tracking-wide text-indigo-600 font-semibold mt-1">Student(s) on Waitlist</span>
+                        <a href="{% url 'manage_waitlists' %}" class="mt-3 inline-block text-sm font-medium text-indigo-600 hover:text-indigo-800 underline">View Waitlists &rarr;</a>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}

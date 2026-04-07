@@ -1,0 +1,78 @@
+{% extends 'base.html' %}
+
+{% block title %}Manage Waitlists - RoomAndRoti{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto py-8">
+    <div class="mb-8 flex flex-col md:flex-row md:justify-between md:items-end border-b border-gray-200 pb-5">
+        <div>
+            <h1 class="text-4xl font-extrabold text-gray-900 tracking-tight">Waitlist Management</h1>
+            <p class="text-gray-500 mt-2 text-lg">Contact waiting students when a bed opens up.</p>
+        </div>
+        <a href="{% url 'owner_dashboard' %}" class="mt-4 md:mt-0 text-indigo-600 hover:text-indigo-800 font-medium">
+            &larr; Back to Dashboard
+        </a>
+    </div>
+
+    {% if waitlists %}
+    <div class="bg-white rounded-xl shadow-md border border-gray-100 overflow-hidden">
+        <ul class="divide-y divide-gray-200">
+            {% for waitlist in waitlists %}
+            <li class="p-6 hover:bg-gray-50 transition-colors">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0">
+                            <span class="inline-flex items-center justify-center h-12 w-12 rounded-full bg-indigo-100 text-indigo-700 font-bold text-xl">
+                                {{ waitlist.student.username|make_list|first|upper }}
+                            </span>
+                        </div>
+                        <div class="ml-4">
+                            <h3 class="text-lg font-bold text-gray-900">{{ waitlist.student.username }}</h3>
+                            <div class="text-sm text-gray-500 mt-1 flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4">
+                                <span><span class="font-medium text-gray-700">PG:</span> {{ waitlist.pg.name }}</span>
+                                
+                                <span class="hidden sm:inline text-gray-300">•</span>
+                                
+                                <span>
+                                    <span class="font-medium text-gray-700">Prefers:</span> 
+                                    {% if waitlist.room_type_preference %}
+                                        {{ waitlist.get_room_type_preference_display }} Sharing
+                                    {% else %}
+                                        Any Room
+                                    {% endif %}
+                                </span>
+                                
+                                <span class="hidden sm:inline text-gray-300">•</span>
+                                
+                                <span><span class="font-medium text-gray-700">Waiting since:</span> {{ waitlist.joined_at|date:"M d, Y" }}</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="flex flex-col items-end">
+                        {% if waitlist.status == 'waiting' %}
+                            <span class="bg-yellow-100 text-yellow-800 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wide mb-3">Waiting</span>
+                            <a href="mailto:{{ waitlist.student.email }}" class="inline-flex items-center bg-indigo-600 text-white text-sm font-medium py-2 px-4 rounded shadow-sm hover:bg-indigo-700 transition">
+                                <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+                                Contact Student
+                            </a>
+                        {% elif waitlist.status == 'notified' %}
+                            <span class="bg-blue-100 text-blue-800 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wide mb-3">Notified</span>
+                        {% else %}
+                            <span class="bg-green-100 text-green-800 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wide mb-3">Resolved</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% else %}
+    <div class="bg-indigo-50 border-2 border-dashed border-indigo-200 rounded-xl p-12 text-center">
+        <i class="fa-solid fa-hands-clapping text-5xl text-yellow-500 block mb-4 mx-auto"></i>
+        <h3 class="text-lg font-medium text-indigo-900 mb-2">No students are currently waiting!</h3>
+        <p class="text-indigo-600 text-sm">When your PGs fill up and students join the waitlist, they will appear here.</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

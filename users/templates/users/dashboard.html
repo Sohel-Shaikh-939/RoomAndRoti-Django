@@ -1,0 +1,322 @@
+{% extends 'base.html' %}
+
+{% block title %}Owner Dashboard - RoomAndRoti{% endblock %}
+
+{% block content %}
+<div class="mb-8 flex flex-col md:flex-row md:justify-between md:items-end border-b border-gray-200 pb-5">
+    <div>
+        <h1 class="text-4xl font-extrabold text-gray-900 tracking-tight">Owner Dashboard</h1>
+        <p class="text-gray-500 mt-2 text-lg">Manage your properties and mess services across the platform.</p>
+    </div>
+</div>
+
+<div class="space-y-12">
+    <!-- Analytics Section -->
+    <section>
+        <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2">
+            <span class="bg-purple-100 text-purple-600 p-2 rounded-lg"><i class="fa-solid fa-chart-line"></i></span>
+            Performance Analytics
+        </h2>
+        
+        <div class="grid grid-cols-1 xl:grid-cols-2 gap-8">
+            <div class="bg-white rounded-xl shadow-md border border-gray-100 p-6 flex flex-col">
+                <div class="flex justify-between items-start mb-6">
+                    <div>
+                        <h3 class="text-gray-500 font-medium mb-1">Total PG Profile Views</h3>
+                        <p class="text-4xl font-extrabold text-blue-600">{{ total_pg_views }}</p>
+                    </div>
+                </div>
+                <div class="relative flex-grow min-h-[250px] w-full">
+                    <canvas id="pgChart"></canvas>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-xl shadow-md border border-gray-100 p-6 flex flex-col">
+                <div class="flex justify-between items-start mb-6">
+                    <div>
+                        <h3 class="text-gray-500 font-medium mb-1">Total Mess Menu Views</h3>
+                        <p class="text-4xl font-extrabold text-orange-600">{{ total_mess_views }}</p>
+                    </div>
+                </div>
+                <div class="relative flex-grow min-h-[250px] w-full">
+                    <canvas id="messChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- PGs Section -->
+    <section>
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-2xl font-bold text-gray-800 flex items-center gap-2">
+                <span class="bg-blue-100 text-blue-600 p-2 rounded-lg"><svg class="w-6 h-6" fill="none"
+                        stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4">
+                        </path>
+                    </svg></span>
+                Your PGs
+            </h2>
+            <a href="{% url 'add_pg' %}"
+                class="inline-flex items-center text-sm bg-blue-600 text-white px-4 py-2 rounded-md font-medium shadow-sm hover:bg-blue-700 transition-colors">
+                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                    xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                </svg>
+                Add New PG
+            </a>
+        </div>
+
+        {% if pgs %}
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {% for pg in pgs %}
+            <div
+                class="bg-white rounded-xl shadow-md border border-gray-100 overflow-hidden hover:shadow-xl transition-shadow duration-300">
+                <div class="p-6 border-b border-gray-50 relative">
+                    <div
+                        class="absolute top-4 right-4 bg-green-100 text-green-800 text-xs font-bold px-2 py-1 rounded-full">
+                        Active</div>
+                    <h3 class="font-bold text-xl text-gray-900 mb-1 pr-12">{{ pg.name }}</h3>
+                    <p class="text-gray-500 text-sm truncate flex items-center">
+                        <svg class="w-4 h-4 mr-1 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z">
+                            </path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                        </svg>
+                        {{ pg.address }}
+                    </p>
+                </div>
+                <div class="px-6 py-4 bg-gray-50 flex justify-between items-center text-sm border-t border-gray-100">
+                    <span class="text-gray-600 font-medium flex items-center">
+                        <svg class="w-4 h-4 mr-1 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z">
+                            </path>
+                        </svg>
+                        {{ pg.rooms.count }} Rooms
+                    </span>
+                    <div class="flex items-center gap-4">
+                        <a href="{% url 'manage_rooms' pg.id %}"
+                            class="inline-flex items-center bg-blue-600 text-white px-3 py-1.5 rounded-md font-medium shadow-sm hover:bg-blue-700 transition-colors">
+                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+                            </svg>
+                            Manage Rooms
+                        </a>
+                        <a href="{% url 'edit_pg' pg.id %}"
+                            class="text-blue-700 font-semibold hover:text-blue-900 flex items-center transition-colors">
+                            Edit Info <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7">
+                                </path>
+                            </svg>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div
+            class="bg-blue-50 border-2 border-dashed border-blue-200 rounded-xl p-12 text-center flex flex-col items-center justify-center">
+            <svg class="w-16 h-16 text-blue-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6">
+                </path>
+            </svg>
+            <h3 class="text-lg font-medium text-blue-900 mb-2">No PGs listed yet</h3>
+            <p class="text-blue-600 text-sm max-w-sm mb-4">Start managing your properties by adding your first PG to the
+                platform.</p>
+            <a href="{% url 'add_pg' %}"
+                class="bg-blue-600 text-white px-4 py-2 rounded-md font-medium shadow-sm hover:bg-blue-700 transition">Add
+                Your First PG</a>
+        </div>
+        {% endif %}
+    </section>
+
+    <!-- Messes Section -->
+    <section>
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-2xl font-bold text-gray-800 flex items-center gap-2">
+                <span class="bg-orange-100 text-orange-600 p-2 rounded-lg"><svg class="w-6 h-6" fill="none"
+                        stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4">
+                        </path>
+                    </svg></span>
+                Your Messes
+            </h2>
+            <a href="{% url 'add_mess' %}"
+                class="inline-flex items-center text-sm bg-orange-600 text-white px-4 py-2 rounded-md font-medium shadow-sm hover:bg-orange-700 transition-colors">
+                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                    xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                </svg>
+                Add New Mess
+            </a>
+        </div>
+
+        {% if messes %}
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {% for mess in messes %}
+            <div
+                class="bg-white rounded-xl shadow-md border border-gray-100 overflow-hidden hover:shadow-xl transition-shadow duration-300 flex flex-col">
+                <div class="p-6 border-b border-gray-50 flex-grow relative">
+                    <div
+                        class="absolute top-4 right-4 bg-green-100 text-green-800 text-xs font-bold px-2 py-1 rounded-full">
+                        Active</div>
+                    <h3 class="font-bold text-xl text-gray-900 mb-1 pr-12">{{ mess.name }}</h3>
+                    <p class="text-gray-500 text-sm truncate flex items-center">
+                        <svg class="w-4 h-4 mr-1 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z">
+                            </path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                        </svg>
+                        {{ mess.address }}
+                    </p>
+                </div>
+                <div
+                    class="px-6 py-4 bg-orange-50 flex justify-between items-center text-sm border-t border-orange-100">
+                    <a href="{% url 'update_menu' mess.id %}"
+                        class="inline-flex items-center bg-orange-600 text-white px-3 py-1.5 rounded-md font-medium shadow-sm hover:bg-orange-700 transition-colors">
+                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z">
+                            </path>
+                        </svg>
+                        Today's Menu
+                    </a>
+                    <a href="{% url 'edit_mess' mess.id %}"
+                        class="text-orange-700 font-semibold hover:text-orange-900 flex items-center transition-colors">
+                        Edit Info
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div
+            class="bg-orange-50 border-2 border-dashed border-orange-200 rounded-xl p-12 text-center flex flex-col items-center justify-center">
+            <svg class="w-16 h-16 text-orange-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M4 6h16M4 10h16M4 14h16M4 18h16"></path>
+            </svg>
+            <h3 class="text-lg font-medium text-orange-900 mb-2">No Messes listed yet</h3>
+            <p class="text-orange-600 text-sm max-w-sm mb-4">Start offering food services by adding your first Mess to
+                the platform.</p>
+            <a href="{% url 'add_mess' %}"
+                class="bg-orange-600 text-white px-4 py-2 rounded-md font-medium shadow-sm hover:bg-orange-700 transition">Add
+                Your First Mess</a>
+        </div>
+        {% endif %}
+    </section>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const labels = {{ chart_labels|safe }};
+        const pgData = {{ chart_pg_data|safe }};
+        const messData = {{ chart_mess_data|safe }};
+        
+        // PG Chart
+        new Chart(document.getElementById('pgChart'), {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Page Views',
+                    data: pgData,
+                    borderColor: '#2563eb', // blue-600
+                    backgroundColor: 'rgba(37, 99, 235, 0.1)',
+                    borderWidth: 3,
+                    pointBackgroundColor: '#ffffff',
+                    pointBorderColor: '#2563eb',
+                    pointBorderWidth: 2,
+                    pointRadius: 4,
+                    pointHoverRadius: 6,
+                    tension: 0.4,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { 
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: 'rgba(17, 24, 39, 0.9)',
+                        padding: 12,
+                        titleFont: { size: 13 },
+                        bodyFont: { size: 14, weight: 'bold' },
+                        displayColors: false
+                    }
+                },
+                scales: { 
+                    y: { 
+                        beginAtZero: true, 
+                        ticks: { precision: 0, padding: 10 },
+                        grid: { display: true, drawBorder: false, color: 'rgba(0,0,0,0.05)' }
+                    },
+                    x: {
+                        grid: { display: false, drawBorder: false },
+                        ticks: { padding: 10 }
+                    }
+                },
+                interaction: { intersect: false, mode: 'index' }
+            }
+        });
+
+        // Mess Chart
+        new Chart(document.getElementById('messChart'), {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Page Views',
+                    data: messData,
+                    borderColor: '#ea580c', // orange-600
+                    backgroundColor: 'rgba(234, 88, 12, 0.1)',
+                    borderWidth: 3,
+                    pointBackgroundColor: '#ffffff',
+                    pointBorderColor: '#ea580c',
+                    pointBorderWidth: 2,
+                    pointRadius: 4,
+                    pointHoverRadius: 6,
+                    tension: 0.4,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { 
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: 'rgba(17, 24, 39, 0.9)',
+                        padding: 12,
+                        titleFont: { size: 13 },
+                        bodyFont: { size: 14, weight: 'bold' },
+                        displayColors: false
+                    }
+                },
+                scales: { 
+                    y: { 
+                        beginAtZero: true, 
+                        ticks: { precision: 0, padding: 10 },
+                        grid: { display: true, drawBorder: false, color: 'rgba(0,0,0,0.05)' }
+                    },
+                    x: {
+                        grid: { display: false, drawBorder: false },
+                        ticks: { padding: 10 }
+                    }
+                },
+                interaction: { intersect: false, mode: 'index' }
+            }
+        });
+    });
+</script>
+{% endblock %}

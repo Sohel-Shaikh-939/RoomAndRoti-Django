@@ -1,0 +1,252 @@
+{% extends 'base.html' %}
+
+{% block title %}Edit PG - RoomAndRoti{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<style>
+    /* Fix Leaflet marker z-index bleeding over dropdowns */
+    .leaflet-pane { z-index: 10 !important; }
+    .leaflet-top, .leaflet-bottom { z-index: 10 !important; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto py-8">
+    <div class="flex items-center justify-between mb-8">
+        <h1 class="text-3xl font-bold text-gray-900">Edit PG Listing</h1>
+        <a href="{% url 'owner_dashboard' %}" class="text-gray-500 hover:text-gray-700 text-sm font-medium">
+            &larr; Back to Dashboard
+        </a>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-lg border border-gray-100 p-8">
+        <form method="post" enctype="multipart/form-data" class="space-y-6">
+            {% csrf_token %}
+
+            {% if form.errors %}
+            <div class="bg-red-50 border-l-4 border-red-500 text-red-700 p-4 rounded-md shadow-sm col-span-full mb-4"
+                role="alert">
+                <div class="flex">
+                    <div class="ml-3">
+                        <p class="text-sm font-medium">Please correct the errors below and try again.</p>
+                        {% if form.non_field_errors %}
+                        <ul class="mt-1 list-disc list-inside text-xs text-red-700">
+                            {% for error in form.non_field_errors %}
+                            <li>{{ error }}</li>
+                            {% endfor %}
+                        </ul>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Basic Info -->
+                <div class="md:col-span-2">
+                    <h3 class="text-lg font-bold text-gray-800 border-b pb-2 mb-4">Basic Details</h3>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">PG Name</label>
+                    <input type="text" value="{{ form.name.value|default_if_none:'' }}" name="name"
+                        class="w-full rounded-md border border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 px-4 py-2"
+                        minlength="3" maxlength="100" title="PG Name must be between 3 and 100 characters"
+                        required>
+                    {% if form.name.errors %}<p class="text-red-500 text-xs mt-1 font-medium">{{ form.name.errors.0 }}
+                    </p>{% endif %}
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Contact Number</label>
+                    <input type="text" value="{{ form.contact_number.value|default_if_none:'' }}" name="contact_number"
+                        class="w-full rounded-md border border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 px-4 py-2"
+                        pattern="[0-9]{10}" maxlength="10" title="Please enter exactly 10 digits"
+                        required>
+                    {% if form.contact_number.errors %}<p class="text-red-500 text-xs mt-1 font-medium">{{
+                        form.contact_number.errors.0 }}</p>{% endif %}
+                </div>
+
+                <div class="md:col-span-2">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Full Address</label>
+                    <textarea name="address" rows="3"
+                        class="w-full rounded-md border border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 px-4 py-2"
+                        minlength="10" title="Please provide a detailed address (at least 10 characters)"
+                        required>{{ form.address.value|default_if_none:'' }}</textarea>
+                    {% if form.address.errors %}<p class="text-red-500 text-xs mt-1 font-medium">{{
+                        form.address.errors.0 }}</p>{% endif %}
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Starting Price (₹)</label>
+                    <input type="number" step="0.01" value="{{ form.starting_price.value|default_if_none:'' }}"
+                        name="starting_price" min="0" title="Price cannot be negative"
+                        class="w-full rounded-md border border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 px-4 py-2"
+                        required>
+                    {% if form.starting_price.errors %}<p class="text-red-500 text-xs mt-1 font-medium">{{
+                        form.starting_price.errors.0 }}</p>{% endif %}
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Gender Restriction</label>
+                    <select name="gender_restriction"
+                        class="w-full rounded-md border border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 px-4 py-2">
+                        <option value="any">Anyone</option>
+                        <option value="boys">Boys Only</option>
+                        <option value="girls">Girls Only</option>
+                    </select>
+                    {% if form.gender_restriction.errors %}<p class="text-red-500 text-xs mt-1 font-medium">{{
+                        form.gender_restriction.errors.0 }}</p>{% endif %}
+                </div>
+
+                <div class="md:col-span-2">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">PG Photo</label>
+                    {% if form.instance.image %}
+                    <div class="mb-2">
+                        <img src="{{ form.instance.image.url }}" alt="Current Photo" class="h-32 object-cover rounded-md border">
+                        <span class="text-xs text-gray-500 block mt-1">Upload a new file to replace this photo</span>
+                    </div>
+                    {% endif %}
+                    <input type="file" name="image" accept="image/*"
+                           class="w-full rounded-md border border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 px-4 py-2 bg-white">
+                    {% if form.image.errors %}<p class="text-red-500 text-xs mt-1 font-medium">{{ form.image.errors.0 }}</p>{% endif %}
+                </div>
+
+                <!-- Amenities -->
+                <div class="md:col-span-2 mt-4">
+                    <h3 class="text-lg font-bold text-gray-800 border-b pb-2 mb-4">Amenities Provided</h3>
+                </div>
+
+                <div class="flex items-center">
+                    <input type="checkbox" name="food_included" id="food_included"
+                        class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded" {% if form.food_included.value %}checked{% endif %}>
+                    {% if form.food_included.errors %} <p class="text-red-500 text-xs mt-1">{{
+                        form.food_included.errors.0 }}</p> {% endif %}
+                    <label for="food_included" class="ml-2 block text-sm text-gray-900">Food Included</label>
+                </div>
+
+                <div class="flex items-center">
+                    <input type="checkbox" name="has_wifi" id="has_wifi"
+                        class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded" {% if form.has_wifi.value %}checked{% endif %}>
+                    {% if form.has_wifi.errors %} <p class="text-red-500 text-xs mt-1">{{ form.has_wifi.errors.0 }}</p>
+                    {% endif %}
+                    <label for="has_wifi" class="ml-2 block text-sm text-gray-900">Free WiFi</label>
+                </div>
+
+                <div class="flex items-center">
+                     <input type="checkbox" name="has_ac" id="has_ac"
+                         class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded" {% if form.has_ac.value %}checked{% endif %}>
+                     {% if form.has_ac.errors %} <p class="text-red-500 text-xs mt-1">{{ form.has_ac.errors.0 }}</p> {% endif %}
+                     <label for="has_ac" class="ml-2 block text-sm text-gray-900">AC Rooms Available</label>
+                </div>
+
+                <div class="flex items-center">
+                    <input type="checkbox" name="attached_bathroom" id="attached_bathroom"
+                        class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded" {% if form.attached_bathroom.value %}checked{% endif %}>
+                    {% if form.attached_bathroom.errors %} <p class="text-red-500 text-xs mt-1">{{
+                        form.attached_bathroom.errors.0 }}</p> {% endif %}
+                    <label for="attached_bathroom" class="ml-2 block text-sm text-gray-900"> Attached Bathrooms</label>
+                </div>
+
+                <!-- Map Coordinates -->
+                <div class="col-span-full mt-4">
+                    <div class="flex items-center justify-between border-b pb-2 mb-4">
+                        <h3 class="text-lg font-bold text-gray-800">Location Map</h3>
+                        <button type="button" id="get-location-btn" class="text-sm bg-blue-100 text-blue-700 hover:bg-blue-200 transition font-medium px-3 py-1.5 rounded flex items-center">
+                            <i class="fa-solid fa-location-crosshairs mr-1.5"></i> Use My Location
+                        </button>
+                    </div>
+                    <p class="text-sm text-gray-600 mb-2">Drag the marker or click the map to pinpoint the exact location.</p>
+                    <div id="map" class="h-64 sm:h-80 w-full rounded-md border border-gray-300 shadow-sm relative overflow-hidden z-0"></div>
+                    <input type="hidden" name="latitude" id="id_latitude" value="{{ form.latitude.value|default_if_none:'' }}">
+                    <input type="hidden" name="longitude" id="id_longitude" value="{{ form.longitude.value|default_if_none:'' }}">
+                    {% if form.latitude.errors %}<p class="text-red-500 text-xs mt-1 font-medium">{{ form.latitude.errors.0 }}</p>{% endif %}
+                </div>
+            </div>
+
+            <div class="pt-6 border-t mt-8 flex justify-end">
+                <button type="submit"
+                    class="bg-blue-600 text-white font-bold py-2 px-6 rounded-md shadow-md hover:bg-blue-700 transition">
+                    Update PG Listing
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const latInput = document.getElementById('id_latitude');
+        const lngInput = document.getElementById('id_longitude');
+        
+        let initialLat = latInput.value ? parseFloat(latInput.value) : 28.6139;
+        let initialLng = lngInput.value ? parseFloat(lngInput.value) : 77.2090;
+
+        const indiaBounds = L.latLngBounds([6.4626999, 68.1097], [35.513327, 97.3953586]);
+        const map = L.map('map', {
+            maxBounds: indiaBounds,
+            maxBoundsViscosity: 1.0,
+            minZoom: 4
+        }).setView([initialLat, initialLng], 13);
+        
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+            maxZoom: 19,
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+        }).addTo(map);
+
+        const marker = L.marker([initialLat, initialLng], {draggable: true}).addTo(map);
+
+        marker.on('dragend', function(e) {
+            const position = marker.getLatLng();
+            latInput.value = position.lat;
+            lngInput.value = position.lng;
+        });
+
+        map.on('click', function(e) {
+            marker.setLatLng(e.latlng);
+            latInput.value = e.latlng.lat;
+            lngInput.value = e.latlng.lng;
+        });
+
+        const locationBtn = document.getElementById('get-location-btn');
+        if (locationBtn) {
+            locationBtn.addEventListener('click', function() {
+                const icon = this.querySelector('i');
+                const originalClass = icon.className;
+                icon.className = 'fa-solid fa-circle-notch fa-spin mr-1.5';
+                
+                if (navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition(function(position) {
+                        const lat = position.coords.latitude;
+                        const lng = position.coords.longitude;
+                        
+                        map.setView([lat, lng], 15);
+                        marker.setLatLng([lat, lng]);
+                        
+                        latInput.value = lat;
+                        lngInput.value = lng;
+                        
+                        icon.className = originalClass;
+                    }, function(error) {
+                        alert("Unable to retrieve your location. Please check your browser location permissions.");
+                        icon.className = originalClass;
+                    });
+                } else {
+                    alert("Geolocation is not supported by your browser.");
+                    icon.className = originalClass;
+                }
+            });
+        }
+
+        if (!latInput.value) {
+            latInput.value = initialLat;
+            lngInput.value = initialLng;
+        }
+        
+        setTimeout(function(){ map.invalidateSize()}, 100);
+    });
+</script>
+{% endblock %}

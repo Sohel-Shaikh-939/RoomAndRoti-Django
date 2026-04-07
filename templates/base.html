@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}RoomAndRoti{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'css/output.css' %}">
+    {% block extra_head %}{% endblock %}
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+</head>
+
+<body class="bg-gray-50 text-gray-800 font-sans min-h-screen flex flex-col">
+
+    <!-- Navigation Bar -->
+    <nav class="bg-blue-600 text-white shadow-md">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <a href="/" class="text-xl font-bold tracking-wider">RoomAndRoti</a>
+                    <div class="hidden md:flex ml-10 space-x-8">
+                        <a href="{% url 'pg_list' %}"
+                            class="hover:text-blue-200 px-3 py-2 rounded-md text-sm font-medium">PGs</a>
+                        <a href="{% url 'mess_list' %}"
+                            class="hover:text-blue-200 px-3 py-2 rounded-md text-sm font-medium">Mess</a>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-4">
+                    {% if user.is_authenticated %}
+                    
+                    <!-- Notifications Bell -->
+                    <a href="{% url 'notifications' %}" class="relative p-2 text-gray-100 hover:text-white transition-colors">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
+                        </svg>
+                        {% if unread_notifications_count > 0 %}
+                        <span class="absolute top-1 right-1 inline-flex items-center justify-center px-1.5 py-0.5 text-xs font-bold leading-none text-white transform translate-x-1/4 -translate-y-1/4 bg-red-600 rounded-full">
+                            {{ unread_notifications_count }}
+                        </span>
+                        {% endif %}
+                    </a>
+                    
+                    <div class="relative group h-full flex items-center">
+                        <button
+                            class="flex items-center space-x-2 text-sm font-medium hover:text-blue-200 focus:outline-none py-2">
+                            <span>Hi, {{ user.username }}</span>
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                                xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                        </button>
+                        <div class="absolute right-0 top-full w-48 pt-1 text-gray-700 hidden group-hover:block z-50">
+                            <div class="bg-white rounded-md shadow-lg py-1 border border-gray-100">
+                                <a href="{% url 'profile' %}"
+                                    class="block px-4 py-2 text-sm hover:bg-gray-100 hover:text-blue-600 transition-colors">My
+                                    Profile</a>
+                                {% if user.role == 'owner' %}
+                                <a href="{% url 'owner_dashboard' %}"
+                                    class="block px-4 py-2 text-sm hover:bg-gray-100 hover:text-blue-600 transition-colors">Owner
+                                    Dashboard</a>
+                                {% endif %}
+                                <div class="border-t border-gray-100"></div>
+                                <form method="post" action="{% url 'logout' %}" class="block w-full text-left">
+                                    {% csrf_token %}
+                                    <button type="submit"
+                                        class="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 text-red-600 hover:text-red-700 transition-colors">Logout</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    {% else %}
+                    <a href="{% url 'login' %}"
+                        class="hover:text-blue-200 px-3 py-2 rounded-md text-sm font-medium">Login</a>
+                    <a href="{% url 'register' %}"
+                        class="bg-white text-blue-600 hover:bg-gray-100 px-4 py-2 rounded-md text-sm font-bold">Sign
+                        Up</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {% if messages %}
+        <div class="mb-4">
+            {% for message in messages %}
+            <div
+                class="p-4 rounded-md mb-2 {% if message.tags == 'error' %}bg-red-100 text-red-700{% elif message.tags == 'success' %}bg-green-100 text-green-700{% else %}bg-blue-100 text-blue-700{% endif %}">
+                {{ message }}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        {% block content %}
+        {% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white text-center py-4 mt-auto">
+        <p class="text-sm">&copy; 2026 RoomAndRoti. All rights reserved.</p>
+    </footer>
+
+</body>
+
+</html>
