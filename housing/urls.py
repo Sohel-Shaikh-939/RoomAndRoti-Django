@@ -10,6 +10,7 @@ urlpatterns = [
     path("", views.pg_list, name="pg_list"), # Displays the main list of all PGs with filters
     path("add/", views.add_pg, name="add_pg"), # Form view for owners to create a new PG
     path("<int:pk>/", views.pg_detail, name="pg_detail"), # Detailed view for a single specific PG
+    path("<int:pg_id>/rate/", views.rate_pg, name="rate_pg"), # Endpoint for submitting rating
     path("<int:pk>/edit/", views.edit_pg, name="edit_pg"), # Form view for owners to edit PG details
     path("compare/", views.compare_pgs, name="compare_pgs"), # Specialized tool to compare multiple PGs
     

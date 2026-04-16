@@ -3,10 +3,11 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.core.paginator import Paginator
 from django.db.models import Q
-from .models import Mess, DailyMenu
+from .models import Mess, DailyMenu, MessRating
 from .forms import MessForm
 from housing.models import ListingView
 from datetime import date
+from django.utils import timezone
 from math import radians, cos, sin, asin, sqrt
 
 def haversine(lon1, lat1, lon2, lat2):
@@ -157,3 +158,41 @@ def edit_mess(request, pk):
         form = MessForm(instance=mess)
 
     return render(request, "food/edit_mess.html", {"form": form, "mess": mess})
+
+
+@login_required
+def rate_mess(request, mess_id):
+    """
+    Submits a user rating for a Mess.
+    Restricts rating to users who have been registered for over 60 days.
+    """
+    if request.method == "POST":
+        mess = get_object_or_404(Mess, pk=mess_id)
+        
+        # Prevent owners from rating their own Mess
+        if request.user == mess.owner:
+            messages.error(request, "You cannot rate your own listing.")
+            return redirect("mess_detail", pk=mess_id)
+            
+        # Account Age Check: Must be >= 60 days
+        account_age = (timezone.now() - request.user.date_joined).days
+        if account_age < 60:
+            messages.error(request, "Your account must be at least 2 months old to leave a rating.")
+            return redirect("mess_detail", pk=mess_id)
+            
+        rating_value = request.POST.get("rating")
+        comment = request.POST.get("comment", "")
+        
+        if rating_value and rating_value.isdigit() and 1 <= int(rating_value) <= 5:
+            # Create or update the rating
+            rating, created = MessRating.objects.update_or_create(
+                mess=mess,
+                user=request.user,
+                defaults={"rating": int(rating_value), "comment": comment}
+            )
+            messages.success(request, "Your rating has been submitted successfully!")
+            return redirect("mess_detail", pk=mess_id)
+        else:
+            messages.error(request, "Invalid rating value.")
+            
+    return redirect("mess_detail", pk=mess_id)

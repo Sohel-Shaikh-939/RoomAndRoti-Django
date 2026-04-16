@@ -3,7 +3,8 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.core.paginator import Paginator
 from django.db.models import Q
-from .models import PG, Waitlist, Room, ListingView
+from .models import PG, Waitlist, Room, ListingView, PGRating
+from django.utils import timezone
 from .forms import PGForm, RoomForm
 
 from math import radians, cos, sin, asin, sqrt
@@ -310,3 +311,41 @@ def delete_room(request, room_id):
 
     # In case of GET request, usually we redirect or show an error
     return redirect("manage_rooms", pg_id=pg.id)
+
+
+@login_required
+def rate_pg(request, pg_id):
+    """
+    Submits a user rating for a PG.
+    Restricts rating to users who have been registered for over 60 days.
+    """
+    if request.method == "POST":
+        pg = get_object_or_404(PG, pk=pg_id)
+        
+        # Prevent owners from rating their own PG
+        if request.user == pg.owner:
+            messages.error(request, "You cannot rate your own listing.")
+            return redirect("pg_detail", pk=pg_id)
+            
+        # Account Age Check: Must be >= 60 days
+        account_age = (timezone.now() - request.user.date_joined).days
+        if account_age < 60:
+            messages.error(request, "Your account must be at least 2 months old to leave a rating.")
+            return redirect("pg_detail", pk=pg_id)
+            
+        rating_value = request.POST.get("rating")
+        comment = request.POST.get("comment", "")
+        
+        if rating_value and rating_value.isdigit() and 1 <= int(rating_value) <= 5:
+            # Create or update the rating
+            rating, created = PGRating.objects.update_or_create(
+                pg=pg,
+                user=request.user,
+                defaults={"rating": int(rating_value), "comment": comment}
+            )
+            messages.success(request, "Your rating has been submitted successfully!")
+            return redirect("pg_detail", pk=pg_id)
+        else:
+            messages.error(request, "Invalid rating value.")
+            
+    return redirect("pg_detail", pk=pg_id)

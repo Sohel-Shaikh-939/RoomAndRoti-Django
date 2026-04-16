@@ -50,6 +50,17 @@ class PG(models.Model):
     def __str__(self):
         return f"{self.name} - {self.owner.username}"
 
+    @property
+    def average_rating(self):
+        ratings = self.ratings.all()
+        if ratings.exists():
+            return round(sum([r.rating for r in ratings]) / ratings.count(), 1)
+        return 0.0
+
+    @property
+    def rating_count(self):
+        return self.ratings.count()
+
 
 class Room(models.Model):
     """
@@ -196,3 +207,20 @@ class ListingView(models.Model):
 
     def __str__(self):
         return f"{self.get_listing_type_display()} {self.listing_id} viewed at {self.viewed_at}"
+
+
+class PGRating(models.Model):
+    """
+    Represents a user's rating and review for a PG.
+    """
+    pg = models.ForeignKey(PG, on_delete=models.CASCADE, related_name="ratings")
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="pg_ratings")
+    rating = models.IntegerField(choices=[(i, str(i)) for i in range(1, 6)])
+    comment = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('pg', 'user')
+
+    def __str__(self):
+        return f"{self.user.username}'s {self.rating}-star rating for {self.pg.name}"

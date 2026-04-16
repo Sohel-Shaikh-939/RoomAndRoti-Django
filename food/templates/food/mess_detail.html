@@ -19,10 +19,15 @@
         {% endif %}
         
         <div class="absolute bottom-4 left-4 bg-white/95 backdrop-blur-sm p-4 rounded-lg shadow-md max-w-xl">
-            <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 flex items-center gap-2">
+            <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 flex items-center gap-3">
                 {{ mess.name }}
                 {% if mess.is_veg_only %}
                     <span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded border border-green-200 font-normal"><i class="fa-solid fa-leaf mr-1"></i> Pure Veg</span>
+                {% endif %}
+                {% if mess.rating_count > 0 %}
+                <span class="text-sm bg-yellow-100 text-yellow-800 px-2 py-1 rounded border border-yellow-200 font-medium flex items-center">
+                    <i class="fa-solid fa-star text-yellow-500 mr-1"></i> {{ mess.average_rating|floatformat:1 }}
+                </span>
                 {% endif %}
             </h1>
             <p class="text-gray-600 mt-1"><i class="fa-solid fa-location-dot mr-1 text-gray-400"></i> {{ mess.address }}</p>
@@ -122,6 +127,83 @@
                             {% endif %}
                         </tbody>
                     </table>
+                </div>
+            </section>
+
+            <!-- Reviews & Ratings -->
+            <section>
+                <h2 class="text-xl font-bold text-gray-900 border-b pb-2 mb-4">Reviews & Ratings</h2>
+                
+                <div class="bg-orange-50 rounded-lg border border-orange-100 p-6 mb-6 flex flex-col sm:flex-row items-center gap-6">
+                    <div class="text-center sm:w-1/3">
+                        <span class="text-5xl font-bold text-gray-900">{{ mess.average_rating|floatformat:1 }}</span>
+                        <div class="text-yellow-400 text-lg mt-2">
+                            <i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star-half-stroke"></i>
+                        </div>
+                        <span class="text-sm text-gray-500 font-medium">{{ mess.rating_count }} user reviews</span>
+                    </div>
+                    {% if user.is_authenticated and user.role == 'student' %}
+                    <div class="flex-1 w-full sm:border-l sm:pl-6 sm:border-t-0 border-t pt-4 sm:pt-0 border-orange-200">
+                        <h3 class="font-bold text-gray-800 mb-3">Leave a Rating</h3>
+                        <form method="post" action="{% url 'rate_mess' mess.id %}" class="space-y-3">
+                            {% csrf_token %}
+                            <div class="flex flex-wrap items-center gap-3">
+                                <label class="text-sm font-medium text-gray-700">Your Score:</label>
+                                <select name="rating" class="border border-orange-200 rounded p-1.5 text-sm outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500" required>
+                                    <option value="5">5 - Excellent</option>
+                                    <option value="4">4 - Good</option>
+                                    <option value="3">3 - Average</option>
+                                    <option value="2">2 - Poor</option>
+                                    <option value="1">1 - Terrible</option>
+                                </select>
+                            </div>
+                            <textarea name="comment" rows="2" class="w-full border border-orange-200 rounded-md p-2.5 text-sm outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500" placeholder="How was the food? (Optional)"></textarea>
+                            <div class="flex justify-end">
+                                <button type="submit" class="bg-orange-600 text-white text-sm font-bold py-2 px-5 rounded-md hover:bg-orange-700 transition shadow-sm">Submit Review</button>
+                            </div>
+                        </form>
+                    </div>
+                    {% elif user.is_authenticated %}
+                    <div class="flex-1 w-full sm:border-l sm:pl-6 sm:border-t-0 border-t pt-4 sm:pt-0 border-orange-200 text-sm text-gray-500 flex items-center justify-center">
+                        <p>Owners cannot leave reviews.</p>
+                    </div>
+                    {% else %}
+                    <div class="flex-1 w-full sm:border-l sm:pl-6 sm:border-t-0 border-t pt-4 sm:pt-0 border-orange-200 text-sm text-gray-600 flex items-center justify-center">
+                        <p><a href="{% url 'account_login' %}" class="text-orange-600 font-bold hover:underline">Log in</a> to leave a review.</p>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <div class="space-y-4">
+                    {% for review in mess.ratings.all reversed %}
+                        <div class="border border-orange-100 rounded-lg p-5 bg-white shadow-sm hover:shadow-md transition">
+                            <div class="flex justify-between items-start mb-3">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-10 h-10 bg-orange-100 text-orange-700 rounded-full flex items-center justify-center font-bold">
+                                        {{ review.user.username.0|upper }}
+                                    </div>
+                                    <div>
+                                        <span class="font-bold text-gray-800 block leading-tight">{{ review.user.username }}</span>
+                                        <span class="text-xs text-gray-500">{{ review.created_at|date:"F d, Y" }}</span>
+                                    </div>
+                                </div>
+                                <div class="text-yellow-400 text-sm tracking-widest bg-yellow-50 px-2 py-1 rounded">
+                                    {% for i in "12345" %}
+                                        <i class="fa-{% if forloop.counter <= review.rating %}solid{% else %}regular text-yellow-300{% endif %} fa-star"></i>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            {% if review.comment %}
+                                <p class="text-gray-700 text-sm leading-relaxed">{{ review.comment }}</p>
+                            {% endif %}
+                        </div>
+                    {% empty %}
+                        <div class="text-center py-8 bg-gray-50 rounded-lg border border-dashed border-gray-300">
+                            <i class="fa-solid fa-utensils text-gray-300 text-4xl mb-3"></i>
+                            <p class="text-gray-500 font-medium">No reviews yet.</p>
+                            <p class="text-sm text-gray-400">Be the first to rate the food!</p>
+                        </div>
+                    {% endfor %}
                 </div>
             </section>
         </div>
